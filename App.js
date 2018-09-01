@@ -1,6 +1,6 @@
 import React from 'react';
 import {Image, StyleSheet, Text, View} from 'react-native';
-import {Button, Container, Content, Form, Header, Input, Item, Label} from 'native-base';
+import {Button, Container, Content, Form, Header, Input, Item, Label, Root, Toast, Spinner} from 'native-base';
 import {MySocialApp} from "./node_modules/mysocialapp-ts-client/lib/mysocialapp";
 
 export default class App extends React.Component {
@@ -9,6 +9,7 @@ export default class App extends React.Component {
         super(props);
         this.state = {
             isLoading: false,
+            appId: "u470584465854a728453",
             email: "alice.jeith@mysocialapp.io",
             password: "myverysecretpassw0rd"
         }
@@ -18,18 +19,18 @@ export default class App extends React.Component {
 
     }
 
-    login(email, password) {
+    login(appId, email, password) {
         this.state.isLoading = true;
 
         new MySocialApp()
-            .setAppId("u470584465854a728453")
+            .setAppId(appId)
             .connect(email, password)
-            .then(v => {
-                v.account.get(false).then(acc => {
-                    console.log(acc);
+            .then(session => {
+                console.log(session);
+                session.account.get(false).then(account => {
                     this.setState({
                         isLoading: false,
-                        account: acc,
+                        account: account,
                     }, function () {
 
                     });
@@ -37,42 +38,63 @@ export default class App extends React.Component {
                     console.log("err: " + err.response);
                 });
 
-            }, err => {
-                console.log(err.response);
+            }, (err) => {
+                Toast.show({
+                    text: "Wrong credentials!",
+                    buttonText: "Ok",
+                    duration: 3000,
+                    type: "danger",
+                    position: "bottom"
+                });
             });
     }
 
     render() {
         if (this.state.isLoading) {
-            return (<View style={styles.container}>
-                <Text style={styles.text}>Loading..</Text>
-            </View>)
+            return (
+                <Container style={{backgroundColor: "#1da1f2"}}>
+                    <Header transparent/>
+                    <Content>
+                        <View style={styles.container}>
+                            <Spinner color="#fff"/>
+                            <Text style={styles.text}>Loading..</Text>
+                        </View>
+                    </Content>
+                </Container>
+            )
         }
 
         return (
-            <Container style={{backgroundColor: "#1da1f2"}}>
-                <Header transparent/>
-                <Content padder>
-                    <View style={styles.container}>
-                        <Image source={require("./images/twitter_logo.png")} style={styles.logo}/>
-                    </View>
+            <Root>
+                <Container style={{backgroundColor: "#1da1f2"}}>
+                    <Header transparent/>
+                    <Content padder>
+                        <View style={styles.container}>
+                            <Image source={require("./images/twitter_logo.png")} style={styles.logo}/>
+                        </View>
 
-                    <Form>
-                        <Item stackedLabel>
-                            <Label style={styles.text}>Email</Label>
-                            <Input style={styles.text} value={this.state.email}/>
-                        </Item>
-                        <Item stackedLabel last>
-                            <Label style={styles.text}>Password</Label>
-                            <Input style={styles.text} secureTextEntry value={this.state.password}/>
-                        </Item>
+                        <Form>
+                            <Item stackedLabel>
+                                <Label style={styles.text}>Email</Label>
+                                <Input style={styles.text}
+                                       onChangeText={(text) => this.setState({email: text})}
+                                       value={this.state.email}/>
+                            </Item>
+                            <Item stackedLabel last>
+                                <Label style={styles.text}>Password</Label>
+                                <Input style={styles.text} secureTextEntry
+                                       onChangeText={(text) => this.setState({password: text})}
+                                       value={this.state.password}/>
+                            </Item>
 
-                        <Button block light style={{marginTop: 10}} onPress={() => this.login(this.state.email, this.state.password)}>
-                            <Text>Sign In</Text>
-                        </Button>
-                    </Form>
-                </Content>
-            </Container>
+                            <Button block light style={{marginTop: 10}}
+                                    onPress={() => this.login(this.state.appId, this.state.email, this.state.password)}>
+                                <Text>Sign In</Text>
+                            </Button>
+                        </Form>
+                    </Content>
+                </Container>
+            </Root>
         );
     }
 }
